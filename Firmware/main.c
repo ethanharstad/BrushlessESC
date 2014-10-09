@@ -20,7 +20,7 @@ int main(void) {
 	int led_state = 0;
 
 	while(1) {
-		for(int i = 0; i < 1000000; i++);
+		for(int i = 0; i < 200000; i++);
 		GPIO_WriteBit(GPIOA, GPIO_Pin_5, led_state ? Bit_SET : Bit_RESET);
 		led_state = !led_state;
 	}
