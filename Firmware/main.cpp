@@ -29,6 +29,37 @@ ESC::ESC(GPIO_TypeDef* gpio_port, uint32_t a, uint32_t b, uint32_t c) {
 	this->commutate();
 }
 
+void initRCC(void) {
+	// Enable HSI
+	RCC_HSICmd(ENABLE);
+	while(RCC_GetFlagStatus(RCC_FLAG_HSIRDY) == RESET);
+
+	// Configure PLL
+	RCC_PLLConfig(RCC_PLLSource_HSI, 12, 252, 8, 4);
+	RCC_PLLCmd(ENABLE);
+	while(RCC_GetFlagStatus(RCC_FLAG_PLLRDY) == RESET);
+
+	// Set PLL as SYSCLK
+	RCC_SYSCLKConfig(RCC_SYSCLKSource_PLLCLK);
+}
+
+void initMCO(void) {
+	// Configure MCO pin
+	GPIO_InitTypeDef gpio;
+	gpio.GPIO_Pin = GPIO_Pin_8;
+	gpio.GPIO_Mode = GPIO_Mode_AF;
+	gpio.GPIO_OType = GPIO_OType_PP;
+	gpio.GPIO_PuPd = GPIO_PuPd_UP;
+	gpio.GPIO_Speed = GPIO_Speed_100MHz;
+	GPIO_Init(GPIOA, &gpio);
+
+	// Map MCO to pin
+	GPIO_PinAFConfig(GPIOA, GPIO_PinSource8, GPIO_AF_MCO);
+
+	// Configure MCO
+	RCC_MCO1Config(RCC_MCO1Source_PLLCLK, RCC_MCO1Div_4);
+}
+
 void ESC::commutate(void) {
 	if(++step > 6) step = 1;
 	switch(step) {
@@ -53,12 +84,20 @@ void ESC::commutate(void) {
 }
 
 int main(void) {
-	ESC esc(GPIOA, GPIO_Pin_5, GPIO_Pin_6, GPIO_Pin_7);
+	// Setup clocks
+	initRCC();
 
+	// Enable GPIOA
 	RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOA, ENABLE);
 
+	// Setup MCO
+	initMCO();
+
+	ESC esc(GPIOA, GPIO_Pin_5, GPIO_Pin_6, GPIO_Pin_7);
+
 	while(1) {
-		for(int i = 0; i < 200000; i++);
+		/* False commutation loop */
+		for(int i = 0; i < 6260; i++);
 		esc.commutate();
 	}
 }
