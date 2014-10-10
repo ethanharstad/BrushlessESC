@@ -13,7 +13,7 @@ class ESC {
 
 public:
 	void init(TIM_TypeDef* timer, GPIO_TypeDef* port, uint32_t a, uint32_t b, uint32_t c);
-	void update(void);
+	void IRQHandler(void);
 	void commutate(void);
 };
 

@@ -26,8 +26,8 @@ void ESC::init(TIM_TypeDef* timer, GPIO_TypeDef* gpio_port, uint32_t a, uint32_t
 	timerInit.TIM_Period = 31;
 	TIM_TimeBaseInit(timer, &timerInit);
 	TIM_Cmd(timer, ENABLE);
-	TIM_ClearITPendingBit(TIM2, TIM_IT_Update);
-	TIM_ITConfig(TIM2, TIM_IT_Update, ENABLE);
+	TIM_ClearITPendingBit(timer, TIM_IT_Update);
+	TIM_ITConfig(timer, TIM_IT_Update, ENABLE);
 
 	/* Configure PWM */
 	ocOff.TIM_OCMode = TIM_OCMode_PWM1;
@@ -47,10 +47,13 @@ void ESC::init(TIM_TypeDef* timer, GPIO_TypeDef* gpio_port, uint32_t a, uint32_t
 	this->commutate();
 }
 
-void ESC::update(void) {
-	if(++count >= set) {
-		count = 0;
-		this->commutate();
+void ESC::IRQHandler(void) {
+	if(TIM_GetITStatus(timer, TIM_IT_Update) != RESET) {
+		TIM_ClearITPendingBit(timer, TIM_IT_Update);
+		if(++count >= set) {
+			count = 0;
+			this->commutate();
+		}
 	}
 }
 
