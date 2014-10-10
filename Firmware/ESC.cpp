@@ -1,20 +1,31 @@
 #include "ESC.h"
 
-void ESC::init(TIM_TypeDef* timer, GPIO_TypeDef* gpio_port, uint32_t a, uint32_t b, uint32_t c) {
+void ESC::init(
+		TIM_TypeDef* timer, GPIO_TypeDef* gpio_port,
+		uint32_t aH, uint32_t bH, uint32_t cH,
+		uint32_t aL, uint32_t bL, uint32_t cL) {
 	/* Initialize member variables */
 	step = 0;
 	count = 0;
 	set = 42;
 	tim = timer;
 	port = gpio_port;
+	a = aL;
+	b = bL;
+	c = cL;
 
 	/* Configure GPIO */
 	GPIO_InitTypeDef gpioInit;
-	gpioInit.GPIO_Pin = a | b | c;
+	// PWM Pins
+	gpioInit.GPIO_Pin = aH | bH | cH;
 	gpioInit.GPIO_Mode = GPIO_Mode_AF;
 	gpioInit.GPIO_OType = GPIO_OType_PP;
 	gpioInit.GPIO_PuPd = GPIO_PuPd_DOWN;
 	gpioInit.GPIO_Speed = GPIO_Speed_100MHz;
+	GPIO_Init(port, &gpioInit);
+	// Output pins
+	gpioInit.GPIO_Pin = aL | bL | cL;
+	gpioInit.GPIO_Mode = GPIO_Mode_OUT;
 	GPIO_Init(port, &gpioInit);
 
 	/* Configure timer */
@@ -70,19 +81,46 @@ void ESC::commutate(void) {
 
 	switch(step) {
 	case 1:
+		GPIO_WriteBit(port, a, Bit_RESET);
+		GPIO_WriteBit(port, b, Bit_SET);
+		GPIO_WriteBit(port, c, Bit_RESET);
+		TIM_OC1Init(tim, &ocOn);
+		TIM_OC2Init(tim, &ocOff);
+		TIM_OC3Init(tim, &ocOff);
 	case 2:
+		GPIO_WriteBit(port, a, Bit_RESET);
+		GPIO_WriteBit(port, b, Bit_RESET);
+		GPIO_WriteBit(port, c, Bit_SET);
 		TIM_OC1Init(tim, &ocOn);
 		TIM_OC2Init(tim, &ocOff);
 		TIM_OC3Init(tim, &ocOff);
 		break;
 	case 3:
+		GPIO_WriteBit(port, a, Bit_RESET);
+		GPIO_WriteBit(port, b, Bit_RESET);
+		GPIO_WriteBit(port, c, Bit_SET);
+		TIM_OC1Init(tim, &ocOff);
+		TIM_OC2Init(tim, &ocOn);
+		TIM_OC3Init(tim, &ocOff);
 	case 4:
+		GPIO_WriteBit(port, a, Bit_SET);
+		GPIO_WriteBit(port, b, Bit_RESET);
+		GPIO_WriteBit(port, c, Bit_RESET);
 		TIM_OC1Init(tim, &ocOff);
 		TIM_OC2Init(tim, &ocOn);
 		TIM_OC3Init(tim, &ocOff);
 		break;
 	case 5:
+		GPIO_WriteBit(port, a, Bit_SET);
+		GPIO_WriteBit(port, b, Bit_RESET);
+		GPIO_WriteBit(port, c, Bit_RESET);
+		TIM_OC1Init(tim, &ocOff);
+		TIM_OC2Init(tim, &ocOff);
+		TIM_OC3Init(tim, &ocOn);
 	case 6:
+		GPIO_WriteBit(port, a, Bit_RESET);
+		GPIO_WriteBit(port, b, Bit_SET);
+		GPIO_WriteBit(port, c, Bit_RESET);
 		TIM_OC1Init(tim, &ocOff);
 		TIM_OC2Init(tim, &ocOff);
 		TIM_OC3Init(tim, &ocOn);
