@@ -11,10 +11,11 @@ class ESC {
 	TIM_TypeDef* tim;
 	TIM_OCInitTypeDef ocOn, ocOff;
 
+	void commutate(void);
+
 public:
 	void init(TIM_TypeDef* timer, GPIO_TypeDef* port, uint32_t a, uint32_t b, uint32_t c);
 	void IRQHandler(void);
-	void commutate(void);
 };
 
 #endif
