@@ -50,28 +50,29 @@ int main(void) {
 	initMCO();
 
 	// Setup timer
-	RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM2, ENABLE);
+	RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM3, ENABLE);
 	TIM_TimeBaseInitTypeDef timer;
 	timer.TIM_Prescaler = 4200;
 	timer.TIM_CounterMode = TIM_CounterMode_Up;
 	timer.TIM_Period = 16;
 	timer.TIM_ClockDivision = TIM_CKD_DIV1;
 	timer.TIM_RepetitionCounter = 0;
-	TIM_TimeBaseInit(TIM2, &timer);
-	TIM_Cmd(TIM2, ENABLE);
-	TIM_ClearITPendingBit(TIM2, TIM_IT_Update);
-	TIM_ITConfig(TIM2, TIM_IT_Update, ENABLE);
+	TIM_TimeBaseInit(TIM3, &timer);
+	TIM_Cmd(TIM3, ENABLE);
+	TIM_ClearITPendingBit(TIM3, TIM_IT_Update);
+	TIM_ITConfig(TIM3, TIM_IT_Update, ENABLE);
 
 	// Setup NVIC
 	NVIC_InitTypeDef nvic;
-	nvic.NVIC_IRQChannel = TIM2_IRQn;
+	nvic.NVIC_IRQChannel = TIM3_IRQn;
 	nvic.NVIC_IRQChannelPreemptionPriority = 0;
 	nvic.NVIC_IRQChannelSubPriority = 1;
 	nvic.NVIC_IRQChannelCmd = ENABLE;
 	NVIC_Init(&nvic);
 
 	// Init ESC
-	esc.init(GPIOA, GPIO_Pin_5, GPIO_Pin_6, GPIO_Pin_7);
+	RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM2, ENABLE);
+	esc.init(TIM2, GPIOA, GPIO_Pin_0, GPIO_Pin_1, GPIO_Pin_2);
 
 	/* Main loop */
 	while(1) {
@@ -81,9 +82,9 @@ int main(void) {
 	}
 }
 
-extern "C" void TIM2_IRQHandler() {
-	if(TIM_GetITStatus(TIM2, TIM_IT_Update) != RESET) {
-		TIM_ClearITPendingBit(TIM2, TIM_IT_Update);
+extern "C" void TIM3_IRQHandler() {
+	if(TIM_GetITStatus(TIM3, TIM_IT_Update) != RESET) {
+		TIM_ClearITPendingBit(TIM3, TIM_IT_Update);
 		esc.commutate();
 	}
 }
