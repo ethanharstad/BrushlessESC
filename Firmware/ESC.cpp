@@ -3,6 +3,8 @@
 void ESC::init(TIM_TypeDef* timer, GPIO_TypeDef* gpio_port, uint32_t a, uint32_t b, uint32_t c) {
 	/* Initialize member variables */
 	step = 0;
+	count = 0;
+	set = 42;
 	tim = timer;
 	port = gpio_port;
 
@@ -11,7 +13,7 @@ void ESC::init(TIM_TypeDef* timer, GPIO_TypeDef* gpio_port, uint32_t a, uint32_t
 	gpioInit.GPIO_Pin = a | b | c;
 	gpioInit.GPIO_Mode = GPIO_Mode_AF;
 	gpioInit.GPIO_OType = GPIO_OType_PP;
-	gpioInit.GPIO_PuPd = GPIO_PuPd_NOPULL;
+	gpioInit.GPIO_PuPd = GPIO_PuPd_DOWN;
 	gpioInit.GPIO_Speed = GPIO_Speed_100MHz;
 	GPIO_Init(port, &gpioInit);
 
@@ -20,20 +22,21 @@ void ESC::init(TIM_TypeDef* timer, GPIO_TypeDef* gpio_port, uint32_t a, uint32_t
 	timerInit.TIM_CounterMode = TIM_CounterMode_Up;
 	timerInit.TIM_RepetitionCounter = 0;
 	timerInit.TIM_ClockDivision = TIM_CKD_DIV1;
-	timerInit.TIM_Prescaler = 420;
-	timerInit.TIM_Period = 16;
+	timerInit.TIM_Prescaler = 50;
+	timerInit.TIM_Period = 31;
 	TIM_TimeBaseInit(timer, &timerInit);
 	TIM_Cmd(timer, ENABLE);
+	TIM_ClearITPendingBit(TIM2, TIM_IT_Update);
+	TIM_ITConfig(TIM2, TIM_IT_Update, ENABLE);
 
 	/* Configure PWM */
-	TIM_OCInitTypeDef ocInit;
-	ocInit.TIM_OCMode = TIM_OCMode_PWM1;
-	ocInit.TIM_OCPolarity = TIM_OCPolarity_High;
-	ocInit.TIM_OutputState = TIM_OutputState_Enable;
-	ocInit.TIM_Pulse = 8;
-	TIM_OC1Init(timer, &ocInit);
-	TIM_OC2Init(timer, &ocInit);
-	TIM_OC3Init(timer, &ocInit);
+	ocOff.TIM_OCMode = TIM_OCMode_PWM1;
+	ocOff.TIM_OCPolarity = TIM_OCPolarity_High;
+	ocOff.TIM_OutputState = TIM_OutputState_Disable;
+	ocOff.TIM_Pulse = 15;
+	TIM_OC1Init(timer, &ocOff);
+	TIM_OC2Init(timer, &ocOff);
+	TIM_OC3Init(timer, &ocOff);
 	TIM_OC1PreloadConfig(timer, TIM_OCPreload_Enable);
 	TIM_OC2PreloadConfig(timer, TIM_OCPreload_Enable);
 	TIM_OC3PreloadConfig(timer, TIM_OCPreload_Enable);
@@ -44,17 +47,19 @@ void ESC::init(TIM_TypeDef* timer, GPIO_TypeDef* gpio_port, uint32_t a, uint32_t
 	this->commutate();
 }
 
+void ESC::update(void) {
+	if(++count >= set) {
+		count = 0;
+		this->commutate();
+	}
+}
+
 void ESC::commutate(void) {
 	// Wrap step counter
 	if(++step > 6) step = 1;
 
-	TIM_OCInitTypeDef ocOn, ocOff;
-	ocOn.TIM_OCMode = TIM_OCMode_PWM1;
-	ocOn.TIM_OCPolarity = TIM_OCPolarity_High;
+	ocOn = ocOff;
 	ocOn.TIM_OutputState = TIM_OutputState_Enable;
-	ocOn.TIM_Pulse = 8;
-	ocOff = ocOn;
-	ocOff.TIM_OutputState = TIM_OutputState_Disable;
 
 	switch(step) {
 	case 1:

@@ -5,13 +5,15 @@
 #include <stm32f4xx_tim.h>
 
 class ESC {
-	uint32_t step;
-	uint32_t pinA, pinB, pinC;
+	uint32_t count, step;
+	uint32_t set;
 	GPIO_TypeDef* port;
 	TIM_TypeDef* tim;
+	TIM_OCInitTypeDef ocOn, ocOff;
 
 public:
 	void init(TIM_TypeDef* timer, GPIO_TypeDef* port, uint32_t a, uint32_t b, uint32_t c);
+	void update(void);
 	void commutate(void);
 };
 

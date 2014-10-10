@@ -20,6 +20,9 @@ void initRCC(void) {
 
 	// Set PLL as SYSCLK
 	RCC_SYSCLKConfig(RCC_SYSCLKSource_PLLCLK);
+
+	// Update state
+	SystemCoreClockUpdate();
 }
 
 void initMCO(void) {
@@ -64,7 +67,7 @@ int main(void) {
 
 	// Setup NVIC
 	NVIC_InitTypeDef nvic;
-	nvic.NVIC_IRQChannel = TIM3_IRQn;
+	nvic.NVIC_IRQChannel = TIM2_IRQn;
 	nvic.NVIC_IRQChannelPreemptionPriority = 0;
 	nvic.NVIC_IRQChannelSubPriority = 1;
 	nvic.NVIC_IRQChannelCmd = ENABLE;
@@ -76,15 +79,13 @@ int main(void) {
 
 	/* Main loop */
 	while(1) {
-		/* False commutation loop
-		for(int i = 0; i < 6260; i++);
-		esc.commutate();*/
+		/* Empty loop */
 	}
 }
 
-extern "C" void TIM3_IRQHandler() {
-	if(TIM_GetITStatus(TIM3, TIM_IT_Update) != RESET) {
-		TIM_ClearITPendingBit(TIM3, TIM_IT_Update);
-		esc.commutate();
+extern "C" void TIM2_IRQHandler() {
+	if(TIM_GetITStatus(TIM2, TIM_IT_Update) != RESET) {
+		TIM_ClearITPendingBit(TIM2, TIM_IT_Update);
+		esc.update();
 	}
 }
