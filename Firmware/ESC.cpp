@@ -87,6 +87,7 @@ void ESC::commutate(void) {
 		TIM_OC1Init(tim, &ocOn);
 		TIM_OC2Init(tim, &ocOff);
 		TIM_OC3Init(tim, &ocOff);
+		break;
 	case 2:
 		GPIO_WriteBit(port, a, Bit_RESET);
 		GPIO_WriteBit(port, b, Bit_RESET);
@@ -102,6 +103,7 @@ void ESC::commutate(void) {
 		TIM_OC1Init(tim, &ocOff);
 		TIM_OC2Init(tim, &ocOn);
 		TIM_OC3Init(tim, &ocOff);
+		break;
 	case 4:
 		GPIO_WriteBit(port, a, Bit_SET);
 		GPIO_WriteBit(port, b, Bit_RESET);
@@ -117,6 +119,7 @@ void ESC::commutate(void) {
 		TIM_OC1Init(tim, &ocOff);
 		TIM_OC2Init(tim, &ocOff);
 		TIM_OC3Init(tim, &ocOn);
+		break;
 	case 6:
 		GPIO_WriteBit(port, a, Bit_RESET);
 		GPIO_WriteBit(port, b, Bit_SET);
