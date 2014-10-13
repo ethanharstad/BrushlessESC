@@ -13,12 +13,15 @@ class ESC {
 	TIM_OCInitTypeDef ocOn, ocOff;
 
 	void commutate(void);
+	void measureBEMF(void);
 
 public:
 	void init(
 			TIM_TypeDef* timer, GPIO_TypeDef* port,
 			uint32_t aH, uint32_t bH, uint32_t cH,
 			uint32_t aL, uint32_t bL, uint32_t cL);
+	void setDutyCycle(uint32_t dc);
+	void setCommutationRate(uint32_t rate);
 	void IRQHandler(void);
 };
 
