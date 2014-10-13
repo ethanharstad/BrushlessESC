@@ -46,14 +46,15 @@ int main(void) {
 	// Setup clocks
 	initRCC();
 
-	// Enable GPIOA
+	// Enable peripheral clocks
 	RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOA, ENABLE);
+	RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM3, ENABLE);
+	RCC_APB2PeriphClockCmd(RCC_APB2Periph_ADC, ENABLE);
 
 	// Setup MCO
 	initMCO();
 
 	// Setup timer
-	RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM3, ENABLE);
 	TIM_TimeBaseInitTypeDef timer;
 	timer.TIM_Prescaler = 4200;
 	timer.TIM_CounterMode = TIM_CounterMode_Up;

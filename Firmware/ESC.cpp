@@ -27,6 +27,11 @@ void ESC::init(
 	gpioInit.GPIO_Pin = aL | bL | cL;
 	gpioInit.GPIO_Mode = GPIO_Mode_OUT;
 	GPIO_Init(port, &gpioInit);
+	// Analog pins
+	gpioInit.GPIO_Pin = aA | bA | cA;
+	gpioInit.GPIO_Mode = GPIO_Mode_AN;
+	gpioInit.GPIO_PuPd = GPIO_PuPd_NOPULL;
+	GPIO_Init(port, &gpioInit);
 
 	/* Configure timer */
 	TIM_TimeBaseInitTypeDef timerInit;
@@ -59,6 +64,19 @@ void ESC::init(
 	GPIO_PinAFConfig(port, GPIO_PinSource1, GPIO_AF_TIM2);
 	GPIO_PinAFConfig(port, GPIO_PinSource2, GPIO_AF_TIM2);
 
+	/* Configure ADC */
+	ADC_InitTypeDef adcInit;
+	adcInit.ADC_ContinuousConvMode = DISABLE;
+	adcInit.ADC_DataAlign = ADC_DataAlign_Right;
+	adcInit.ADC_ExternalTrigConv = ADC_ExternalTrigConv_T1_CC1;
+	adcInit.ADC_ExternalTrigConvEdge = ADC_ExternalTrigConvEdge_None;
+	adcInit.ADC_NbrOfConversion = 1;
+	adcInit.ADC_Resolution = ADC_Resolution_12b;
+	adcInit.ADC_ScanConvMode = DISABLE;
+	ADC_Init(ADC, &adcInit);
+	ADC_Cmd(ADC, ENABLE);
+
+	// Initial commutation step
 	this->commutate();
 }
 
@@ -70,25 +88,13 @@ void ESC::IRQHandler(void) {
 		}
 	} else if(TIM_GetITStatus(tim, TIM_IT_CC1) != RESET) {
 		TIM_ClearITPendingBit(tim, TIM_IT_CC1);
-		if(step == 1) {
-			// Measure BEMF on C
-		} else {
-			// Measure BEMF on B
-		}
+		this->measureBEMF();
 	} else if(TIM_GetITStatus(tim, TIM_IT_CC2) != RESET) {
 		TIM_ClearITPendingBit(tim, TIM_IT_CC2);
-		if(step == 3) {
-			// Measure BEMF on A
-		} else {
-			// Measure BEMF on C
-		}
+		this->measureBEMF();
 	} else if(TIM_GetITStatus(tim, TIM_IT_CC3) != RESET) {
 		TIM_ClearITPendingBit(tim, TIM_IT_CC3);
-		if(step == 5) {
-			// Measure BEMF on B
-		} else {
-			// Measure BEMF on A
-		}
+		this->measureBEMF();
 	}
 }
 
@@ -164,7 +170,37 @@ void ESC::commutate(void) {
 }
 
 void ESC::measureBEMF(void) {
+	bool rising;
 
+	// Setup ADC channel
+	switch(step) {
+	case 1:
+		ADC_RegularChannelConfig(ADC, chC, 1, ADC_SampleTime_3Cycles);
+		rising = false;
+	case 2:
+		ADC_RegularChannelConfig(ADC, chB, 1, ADC_SampleTime_3Cycles);
+		rising = true;
+	case 3:
+		ADC_RegularChannelConfig(ADC, chA, 1, ADC_SampleTime_3Cycles);
+		rising = false;
+	case 4:
+		ADC_RegularChannelConfig(ADC, chC, 1, ADC_SampleTime_3Cycles);
+		rising = true;
+	case 5:
+		ADC_RegularChannelConfig(ADC, chB, 1, ADC_SampleTime_3Cycles);
+		rising = false;
+	case 6:
+		ADC_RegularChannelConfig(ADC, chA, 1, ADC_SampleTime_3Cycles);
+		rising = true;
+	default:
+		step = 1;
+		this->commutate();
+	}
+
+	// Read BEMF
+	ADC_SoftwareStartConv(ADC);
+	while(ADC_GetFlagStatus(ADC, ADC_FLAG_EOC) != SET);
+	ADC_GetConversionValue(ADC);
 }
 
 void ESC::setDutyCycle(uint32_t dc) {
