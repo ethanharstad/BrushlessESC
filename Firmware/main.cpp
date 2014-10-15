@@ -78,7 +78,8 @@ int main(void) {
 	RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM2, ENABLE);
 	esc.init(TIM2, GPIOA,
 			GPIO_Pin_0, GPIO_Pin_1, GPIO_Pin_2,
-			GPIO_Pin_3, GPIO_Pin_4, GPIO_Pin_5);
+			GPIO_Pin_3, GPIO_Pin_4, GPIO_Pin_5,
+			GPIO_Pin_7, GPIO_Pin_8, GPIO_Pin_9);
 
 	/* Main loop */
 	while(1) {

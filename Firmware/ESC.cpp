@@ -3,7 +3,8 @@
 void ESC::init(
 		TIM_TypeDef* timer, GPIO_TypeDef* gpio_port,
 		uint32_t aH, uint32_t bH, uint32_t cH,
-		uint32_t aL, uint32_t bL, uint32_t cL) {
+		uint32_t aL, uint32_t bL, uint32_t cL,
+		uint32_t aA, uint32_t bA, uint32_t cA) {
 	/* Initialize member variables */
 	step = 0;
 	count = 0;
@@ -13,6 +14,9 @@ void ESC::init(
 	a = aL;
 	b = bL;
 	c = cL;
+	chA = aA;
+	chB = bA;
+	chC = cA;
 
 	/* Configure GPIO */
 	GPIO_InitTypeDef gpioInit;
@@ -73,8 +77,8 @@ void ESC::init(
 	adcInit.ADC_NbrOfConversion = 1;
 	adcInit.ADC_Resolution = ADC_Resolution_12b;
 	adcInit.ADC_ScanConvMode = DISABLE;
-	ADC_Init(ADC, &adcInit);
-	ADC_Cmd(ADC, ENABLE);
+	ADC_Init(ADC1, &adcInit);
+	ADC_Cmd(ADC1, ENABLE);
 
 	// Initial commutation step
 	this->commutate();
@@ -175,22 +179,22 @@ void ESC::measureBEMF(void) {
 	// Setup ADC channel
 	switch(step) {
 	case 1:
-		ADC_RegularChannelConfig(ADC, chC, 1, ADC_SampleTime_3Cycles);
+		ADC_RegularChannelConfig(ADC1, chC, 1, ADC_SampleTime_3Cycles);
 		rising = false;
 	case 2:
-		ADC_RegularChannelConfig(ADC, chB, 1, ADC_SampleTime_3Cycles);
+		ADC_RegularChannelConfig(ADC1, chB, 1, ADC_SampleTime_3Cycles);
 		rising = true;
 	case 3:
-		ADC_RegularChannelConfig(ADC, chA, 1, ADC_SampleTime_3Cycles);
+		ADC_RegularChannelConfig(ADC1, chA, 1, ADC_SampleTime_3Cycles);
 		rising = false;
 	case 4:
-		ADC_RegularChannelConfig(ADC, chC, 1, ADC_SampleTime_3Cycles);
+		ADC_RegularChannelConfig(ADC1, chC, 1, ADC_SampleTime_3Cycles);
 		rising = true;
 	case 5:
-		ADC_RegularChannelConfig(ADC, chB, 1, ADC_SampleTime_3Cycles);
+		ADC_RegularChannelConfig(ADC1, chB, 1, ADC_SampleTime_3Cycles);
 		rising = false;
 	case 6:
-		ADC_RegularChannelConfig(ADC, chA, 1, ADC_SampleTime_3Cycles);
+		ADC_RegularChannelConfig(ADC1, chA, 1, ADC_SampleTime_3Cycles);
 		rising = true;
 	default:
 		step = 1;
@@ -198,9 +202,9 @@ void ESC::measureBEMF(void) {
 	}
 
 	// Read BEMF
-	ADC_SoftwareStartConv(ADC);
-	while(ADC_GetFlagStatus(ADC, ADC_FLAG_EOC) != SET);
-	ADC_GetConversionValue(ADC);
+	ADC_SoftwareStartConv(ADC1);
+	while(ADC_GetFlagStatus(ADC1, ADC_FLAG_EOC) != SET);
+	ADC_GetConversionValue(ADC1);
 }
 
 void ESC::setDutyCycle(uint32_t dc) {
